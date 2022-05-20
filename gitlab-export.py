@@ -9,6 +9,11 @@ import sys
 import time
 from datetime import datetime
 
+# Archive Projects
+def archive_project(project):
+    project.archive()
+    time.sleep(10)
+
 # Export Projects
 def export_project(project, output_path, group_path):
     print("Exporting project %s (%s) with id %d" % (project.path, project.name, project.id))
@@ -27,6 +32,9 @@ def export_project(project, output_path, group_path):
     with open('%s/%s___%s.tgz' % (p_path, project.path, project.name), 'wb') as f:
         p_export.download(streamed=True, action=f.write)
 
+    # Archive the project to prevent any future changes to the repository
+    archive_project(project)
+
 
 def export_group(group, output_path):
     print("Exporting group %s" % group.id)
@@ -34,7 +42,7 @@ def export_group(group, output_path):
     g_export =  g_group.exports.create()
 
     # Exporting group is fast, without refresh status
-    time.sleep(3)
+    time.sleep(30)
 
     # Create output project path if no exists
     g_path = os.path.join(output_path, now, group.full_path, "_group")
