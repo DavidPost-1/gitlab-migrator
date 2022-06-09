@@ -20,14 +20,27 @@ def import_projects(root_group, input_path):
             p_name = Path(f).stem.split("___")[1]
             print("Importing Project '%s' to '%s' in '%s' (%s)" % (p_name, p_path, p_namespace, projects_path))
             try:
+                # The following line will except if project exists
                 output = gl.projects.import_project(file=p_file, name=p_name, path=p_path, namespace=p_namespace)
                 # Get a ProjectImport object to track the import status
                 project_import = gl.projects.get(output['id'], lazy=True).imports.get()
+                retry = 0
                 while project_import.import_status != 'finished':
                     time.sleep(args.delay)
                     project_import.refresh()
-            except gitlab.exceptions.GitlabHttpError as e:
+                    if project_import.import_status == 'failed':
+                        # If it has faied status then try again, overwriting the previous attempt. Increment retry
+                        retry += 1
+                        if retry >= 4:
+                            print("Failed to Import project %s in %s: %s" % (p_name, p_namespace, e))
+                            break 
+                        output = gl.projects.import_project(file=p_file, name=p_name, path=p_path, namespace=p_namespace, overwrite=True)
+                        project_import = gl.projects.get(output['id'], lazy=True).imports.get()
+
+            except (gitlab.exceptions.GitlabHttpError, gitlab.exceptions.GitlabImportError) as e:
                 print("Issue with project %s in %s: %s" % (p_name, p_namespace, e))
+
+        time.sleep(10)
 
 
 # Import projects from all groups
