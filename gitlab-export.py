@@ -33,7 +33,7 @@ def export_project(project, output_path, group_path):
         p_export.download(streamed=True, action=f.write)
 
     # Archive the project to prevent any future changes to the repository
-    archive_project(project)
+    # archive_project(project)
 
 
 def export_group(group, output_path):
